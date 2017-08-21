@@ -1,7 +1,7 @@
 # Manage-Delegates
 PowerShell script which can add,remove or list delegates from a exchange mailbox.
 
-##Examples
+## Examples
 
 List all delegates with the permissions with impersonisation
 .\Manage-Delegates.p1 -Identity "mollyc@contoso.com" -Impersonate -Mode "List"
