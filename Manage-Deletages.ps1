@@ -378,6 +378,7 @@ if ($service -ne $null) {
             # Checking if is already a delegate
             $delegatelist = Get-Delegates -service $service -Identity $Identity
             if ($delegatelist -ne $null) {
+                # Are there any delegates set?
                 if ($delegatelist.DelegateUserResponses.Count -eq 0) {
                     # The user isn't delegate, so we need to add the user
                     Set-Delegate -Service $service -Identity $Identity -Delegate $DelegateToSet `
@@ -387,23 +388,25 @@ if ($service -ne $null) {
                         -ReceiveCopiesOfMeetingMessages $ReceiveCopiesOfMeetingMessages -ViewPrivateItems $CanViewPrivateItems -Delegates $delegatelist -Add
                         break
                 }
-                foreach($User in $delegatelist.DelegateUserResponses) {
-                     if($User.DelegateUser.UserId.PrimarySmtpAddress.ToLower() -eq $DelegateToSet.ToLower()){
-                        # The user is already delegate
-                        Set-Delegate -Service $service -Identity $Identity -Delegate $DelegateToSet `
-                          -CalendarFolderPermissionLevel (Match-ToPermission -Permission $CalendarPermissions) -ContactsFolderPermissionLevel (Match-ToPermission -Permission $ContactsPermissions) `
-                          -InboxFolderPermissionLevel (Match-ToPermission -Permission $InboxPermissions) -JournalFolderPermissionLevel (Match-ToPermission -Permission $JournalPermissions) `
-                          -NotesFolderPermissionLevel (Match-ToPermission -Permission $NotesPermissions) -TasksFolderPermissionLevel (Match-ToPermission -Permission $TasksPermissions) `
-                          -ReceiveCopiesOfMeetingMessages $ReceiveCopiesOfMeetingMessages -ViewPrivateItems $CanViewPrivateItems -Delegates $delegatelist
-                     }
-                     else {
-                        # The user isn't delegate, so we need to add the user
-                        Set-Delegate -Service $service -Identity $Identity -Delegate $DelegateToSet `
-                          -CalendarFolderPermissionLevel (Match-ToPermission -Permission $CalendarPermissions) -ContactsFolderPermissionLevel (Match-ToPermission -Permission $ContactsPermissions) `
-                          -InboxFolderPermissionLevel (Match-ToPermission -Permission $InboxPermissions) -JournalFolderPermissionLevel (Match-ToPermission -Permission $JournalPermissions) `
-                          -NotesFolderPermissionLevel (Match-ToPermission -Permission $NotesPermissions) -TasksFolderPermissionLevel (Match-ToPermission -Permission $TasksPermissions) `
-                          -ReceiveCopiesOfMeetingMessages $ReceiveCopiesOfMeetingMessages -ViewPrivateItems $CanViewPrivateItems -Delegates $delegatelist -Add
-                     }
+                else {
+                    foreach($User in $delegatelist.DelegateUserResponses) {
+                         if($User.DelegateUser.UserId.PrimarySmtpAddress.ToLower() -eq $DelegateToSet.ToLower()){
+                            # The user is already delegate, only set the permissions
+                            Set-Delegate -Service $service -Identity $Identity -Delegate $DelegateToSet `
+                              -CalendarFolderPermissionLevel (Match-ToPermission -Permission $CalendarPermissions) -ContactsFolderPermissionLevel (Match-ToPermission -Permission $ContactsPermissions) `
+                              -InboxFolderPermissionLevel (Match-ToPermission -Permission $InboxPermissions) -JournalFolderPermissionLevel (Match-ToPermission -Permission $JournalPermissions) `
+                              -NotesFolderPermissionLevel (Match-ToPermission -Permission $NotesPermissions) -TasksFolderPermissionLevel (Match-ToPermission -Permission $TasksPermissions) `
+                              -ReceiveCopiesOfMeetingMessages $ReceiveCopiesOfMeetingMessages -ViewPrivateItems $CanViewPrivateItems -Delegates $delegatelist
+                         }
+                         else {
+                            # The user isn't delegate, so we need to add the user
+                            Set-Delegate -Service $service -Identity $Identity -Delegate $DelegateToSet `
+                              -CalendarFolderPermissionLevel (Match-ToPermission -Permission $CalendarPermissions) -ContactsFolderPermissionLevel (Match-ToPermission -Permission $ContactsPermissions) `
+                              -InboxFolderPermissionLevel (Match-ToPermission -Permission $InboxPermissions) -JournalFolderPermissionLevel (Match-ToPermission -Permission $JournalPermissions) `
+                              -NotesFolderPermissionLevel (Match-ToPermission -Permission $NotesPermissions) -TasksFolderPermissionLevel (Match-ToPermission -Permission $TasksPermissions) `
+                              -ReceiveCopiesOfMeetingMessages $ReceiveCopiesOfMeetingMessages -ViewPrivateItems $CanViewPrivateItems -Delegates $delegatelist -Add
+                         }
+                    }
                 }
             }
         }
