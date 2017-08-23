@@ -168,7 +168,7 @@ catch {
 # function to connect to a mailbox
 function Create-Service {
   Param(
-    [string]$Identity = "admin@contoso.de",
+    [string]$Identity,
     [switch]$Impersonate
   )
   try {
@@ -329,7 +329,6 @@ if ($service -ne $null) {
     switch ($Mode) {
         "List" {
             $DelegateList = Get-Delegates -Service $service -Identity $Identity
-            Write-Host $DelegateList.GetType()
             if (($DelegateList -ne $null) -and ($DelegateList.DelegateUserResponses.Count -ge 1)) {
                 $logger.Write("Total delegates: $($DelegateList.DelegateUserResponses.Count)",0,$WriteOnConsole)
                 foreach ($User in $DelegateList.DelegateUserResponses) {
