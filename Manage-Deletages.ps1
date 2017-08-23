@@ -133,7 +133,7 @@
     [Parameter(ParameterSetName="Set")][ValidateSet("None","Reviewer","Author","Editor")][string]$TasksPermissions = "None",
     [Parameter(ParameterSetName="Set")][ValidateSet($true,$false)][bool]$ReceiveCopiesOfMeetingMessages = $false,
     [Parameter(ParameterSetName="Set")][ValidateSet($true,$false)][bool]$CanViewPrivateItems = $false,
-    [switch]$WriteOnConsole = $true
+    [switch]$WriteOnConsole
  )
 
  # Import global modules
@@ -333,7 +333,7 @@ if ($service -ne $null) {
                 $logger.Write("Total delegates: $($DelegateList.DelegateUserResponses.Count)",0,$WriteOnConsole)
                 foreach ($User in $DelegateList.DelegateUserResponses) {
                     $logger.Write("Delegate: $($User.DelegateUser.UserId.PrimarySmtpAddress)",0,$WriteOnConsole)
-                    $logger.Write("Permissions...",0,$true)
+                    $logger.Write("Permissions...",0,$WriteOnConsole)
                     $logger.Write("Calendar: $($User.DelegateUser.Permissions.CalendarFolderPermissionLevel)",0,$WriteOnConsole)
                     $logger.Write("Contacts: $($User.DelegateUser.Permissions.ContactsFolderPermissionLevel)",0,$WriteOnConsole)
                     $logger.Write("Inbox: $($User.DelegateUser.Permissions.InboxFolderPermissionLevel)",0,$WriteOnConsole)
