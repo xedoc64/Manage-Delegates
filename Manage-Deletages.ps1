@@ -365,7 +365,7 @@ if ($service -ne $null) {
                         $logger.Write("Tasks: $($User.DelegateUser.Permissions.TasksFolderPermissionLevel)")
                         $logger.Write("Receive copies of meeting messages: $($User.DelegateUser.ReceiveCopiesOfMeetingMessages)",0)
                         $logger.Write("View private items: $($User.DelegateUser.ViewPrivateItems)",0)
-                        $exit = $true
+                        $exist = $true
                         Remove-Delegate -Service $service -Identity $Identity -Delegate $DelegateToRemove
                     }  
                 }
