@@ -356,7 +356,7 @@ if ($service -ne $null) {
                     # is the smtp address is matching?
                     if($User.DelegateUser.UserId.PrimarySmtpAddress.ToLower() -eq $DelegateToRemove.ToLower()){
                         $logger.Write("Delegate $($DelegateToRemove) found. Try to removing now",0,$WriteOnConsole)
-                        $logger.Write("Permissions...",0)
+                        $logger.Write("Permissions...")
                         $logger.Write("Calendar: $($User.DelegateUser.Permissions.CalendarFolderPermissionLevel)")
                         $logger.Write("Contacts: $($User.DelegateUser.Permissions.ContactsFolderPermissionLevel)")
                         $logger.Write("Inbox: $($User.DelegateUser.Permissions.InboxFolderPermissionLevel)")
