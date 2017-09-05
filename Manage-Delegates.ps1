@@ -8,19 +8,19 @@
 
     Author: Torsten Schlopsnies
     
-    Version 1.0 2017-08-18
+    Version 1.1 2017-09-05
     
     .NOTES 
     Requirements 
     - EWS 2.2 installed
-    - Impersonisation rights
-    - Exchange 2013 (tested with CU17) or higher (works for Exchange 2010 maybe also)
-    - GlobalModules from Thomas Stensitzki (for logging and console output, min Version 2.1) => https://github.com/Apoc70/GlobalFunctions
-	- Working autodiscover, trusted certificate or certificate from an enterprise ca
+    - Impersonitsation rights
+    - Exchange 2013 (tested with CU17) or higher (runs maybe for Exchange 2010 also)
+    - GlobalFunctions from Thomas Stensitzki (for logging and console output) => https://github.com/Apoc70/GlobalFunctions
 
     Revision History 
     -------------------------------------------------------------------------------- 
     1.0      Initial release
+    1.1      fixed behaviour when altering delegates
 
 
     Based on a article from Glen: http://gsexdev.blogspot.de/2012/03/ews-managed-api-and-powershell-how-to.html
@@ -309,10 +309,10 @@ function Match-ToPermission
       return [Microsoft.Exchange.WebServices.Data.DelegateFolderPermissionLevel]::Editor
     }
     "Author" {
-      [Microsoft.Exchange.WebServices.Data.DelegateFolderPermissionLevel]::Author
+      return [Microsoft.Exchange.WebServices.Data.DelegateFolderPermissionLevel]::Author
     }
     "Reviewer" {
-      [Microsoft.Exchange.WebServices.Data.DelegateFolderPermissionLevel]::Reviewer
+      return [Microsoft.Exchange.WebServices.Data.DelegateFolderPermissionLevel]::Reviewer
     }
     default: {
       return [Microsoft.Exchange.WebServices.Data.DelegateFolderPermissionLevel]::None
@@ -333,7 +333,7 @@ if ($service -ne $null) {
                 $logger.Write("Total delegates: $($DelegateList.DelegateUserResponses.Count)",0,$WriteOnConsole)
                 foreach ($User in $DelegateList.DelegateUserResponses) {
                     $logger.Write("Delegate: $($User.DelegateUser.UserId.PrimarySmtpAddress)",0,$WriteOnConsole)
-                    $logger.Write("Permissions...",0,$WriteOnConsole)
+                    $logger.Write("Permissions...",0, $WriteOnConsole)
                     $logger.Write("Calendar: $($User.DelegateUser.Permissions.CalendarFolderPermissionLevel)",0,$WriteOnConsole)
                     $logger.Write("Contacts: $($User.DelegateUser.Permissions.ContactsFolderPermissionLevel)",0,$WriteOnConsole)
                     $logger.Write("Inbox: $($User.DelegateUser.Permissions.InboxFolderPermissionLevel)",0,$WriteOnConsole)
@@ -356,7 +356,7 @@ if ($service -ne $null) {
                     # is the smtp address is matching?
                     if($User.DelegateUser.UserId.PrimarySmtpAddress.ToLower() -eq $DelegateToRemove.ToLower()){
                         $logger.Write("Delegate $($DelegateToRemove) found. Try to removing now",0,$WriteOnConsole)
-                        $logger.Write("Permissions...")
+                        $logger.Write("Permissions...",0)
                         $logger.Write("Calendar: $($User.DelegateUser.Permissions.CalendarFolderPermissionLevel)")
                         $logger.Write("Contacts: $($User.DelegateUser.Permissions.ContactsFolderPermissionLevel)")
                         $logger.Write("Inbox: $($User.DelegateUser.Permissions.InboxFolderPermissionLevel)")
@@ -378,7 +378,7 @@ if ($service -ne $null) {
             # Checking if is already a delegate
             $delegatelist = Get-Delegates -service $service -Identity $Identity
             if ($delegatelist -ne $null) {
-                # Are there any delegates set?
+				# Are any delegates set?
                 if ($delegatelist.DelegateUserResponses.Count -eq 0) {
                     # The user isn't delegate, so we need to add the user
                     Set-Delegate -Service $service -Identity $Identity -Delegate $DelegateToSet `
@@ -386,28 +386,30 @@ if ($service -ne $null) {
                         -InboxFolderPermissionLevel (Match-ToPermission -Permission $InboxPermissions) -JournalFolderPermissionLevel (Match-ToPermission -Permission $JournalPermissions) `
                         -NotesFolderPermissionLevel (Match-ToPermission -Permission $NotesPermissions) -TasksFolderPermissionLevel (Match-ToPermission -Permission $TasksPermissions) `
                         -ReceiveCopiesOfMeetingMessages $ReceiveCopiesOfMeetingMessages -ViewPrivateItems $CanViewPrivateItems -Delegates $delegatelist -Add
-                        break
                 }
-                else {
-                    foreach($User in $delegatelist.DelegateUserResponses) {
-                         if($User.DelegateUser.UserId.PrimarySmtpAddress.ToLower() -eq $DelegateToSet.ToLower()){
-                            # The user is already delegate, only set the permissions
-                            Set-Delegate -Service $service -Identity $Identity -Delegate $DelegateToSet `
-                              -CalendarFolderPermissionLevel (Match-ToPermission -Permission $CalendarPermissions) -ContactsFolderPermissionLevel (Match-ToPermission -Permission $ContactsPermissions) `
-                              -InboxFolderPermissionLevel (Match-ToPermission -Permission $InboxPermissions) -JournalFolderPermissionLevel (Match-ToPermission -Permission $JournalPermissions) `
-                              -NotesFolderPermissionLevel (Match-ToPermission -Permission $NotesPermissions) -TasksFolderPermissionLevel (Match-ToPermission -Permission $TasksPermissions) `
-                              -ReceiveCopiesOfMeetingMessages $ReceiveCopiesOfMeetingMessages -ViewPrivateItems $CanViewPrivateItems -Delegates $delegatelist
-                         }
-                         else {
-                            # The user isn't delegate, so we need to add the user
-                            Set-Delegate -Service $service -Identity $Identity -Delegate $DelegateToSet `
-                              -CalendarFolderPermissionLevel (Match-ToPermission -Permission $CalendarPermissions) -ContactsFolderPermissionLevel (Match-ToPermission -Permission $ContactsPermissions) `
-                              -InboxFolderPermissionLevel (Match-ToPermission -Permission $InboxPermissions) -JournalFolderPermissionLevel (Match-ToPermission -Permission $JournalPermissions) `
-                              -NotesFolderPermissionLevel (Match-ToPermission -Permission $NotesPermissions) -TasksFolderPermissionLevel (Match-ToPermission -Permission $TasksPermissions) `
-                              -ReceiveCopiesOfMeetingMessages $ReceiveCopiesOfMeetingMessages -ViewPrivateItems $CanViewPrivateItems -Delegates $delegatelist -Add
-                         }
+				else {
+                    [hashtable]$FoundDelegates = @{}
+                    # Filling the array with all delegates
+                    for ($i = 0; $i -le $delegatelist.DelegateUserResponses.Count-1; $i++) {
+                        $FoundDelegates.Add("Delegate $($i)",$DelegateList.DelegateUserResponses[$i].DelegateUser.UserId.PrimarySmtpAddress.ToLower())
                     }
-                }
+                    if ($FoundDelegates.ContainsValue($DelegateToSet.ToLower())) {
+                        # User is already there, we need to alter the entry
+                        Set-Delegate -Service $service -Identity $Identity -Delegate $DelegateToSet `
+							  -CalendarFolderPermissionLevel (Match-ToPermission -Permission $CalendarPermissions) -ContactsFolderPermissionLevel (Match-ToPermission -Permission $ContactsPermissions) `
+							  -InboxFolderPermissionLevel (Match-ToPermission -Permission $InboxPermissions) -JournalFolderPermissionLevel (Match-ToPermission -Permission $JournalPermissions) `
+							  -NotesFolderPermissionLevel (Match-ToPermission -Permission $NotesPermissions) -TasksFolderPermissionLevel (Match-ToPermission -Permission $TasksPermissions) `
+							  -ReceiveCopiesOfMeetingMessages $ReceiveCopiesOfMeetingMessages -ViewPrivateItems $CanViewPrivateItems -Delegates $delegatelist
+                    }
+                    else {
+                        # The user isn't delegate, so we need to add the user
+							Set-Delegate -Service $service -Identity $Identity -Delegate $DelegateToSet `
+							  -CalendarFolderPermissionLevel (Match-ToPermission -Permission $CalendarPermissions) -ContactsFolderPermissionLevel (Match-ToPermission -Permission $ContactsPermissions) `
+							  -InboxFolderPermissionLevel (Match-ToPermission -Permission $InboxPermissions) -JournalFolderPermissionLevel (Match-ToPermission -Permission $JournalPermissions) `
+							  -NotesFolderPermissionLevel (Match-ToPermission -Permission $NotesPermissions) -TasksFolderPermissionLevel (Match-ToPermission -Permission $TasksPermissions) `
+							  -ReceiveCopiesOfMeetingMessages $ReceiveCopiesOfMeetingMessages -ViewPrivateItems $CanViewPrivateItems -Delegates $delegatelist -Add
+                    }
+				}
             }
         }
     }
