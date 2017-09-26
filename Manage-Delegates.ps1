@@ -148,9 +148,15 @@ $logger.Write('Script started')
 # loading the ews.dll
 try 
 {
-  if($env:ExchangeInstallPath -ne '') {
-    # Use local Exchange install path, if available
-    $dllpath = "$($env:ExchangeInstallPath)\bin\Microsoft.Exchange.WebServices.dll"
+  if ($env:ExchangeInstallPath -ne $null) {
+    if ($env:ExchangeInstallPath -ne '') {
+		# Use local Exchange install path, if available
+		$dllpath = "$($env:ExchangeInstallPath)\bin\Microsoft.Exchange.WebServices.dll"
+	}
+	else {
+		# Use EWS managed API install path
+		$dllpath = 'C:\Program Files\Microsoft\Exchange\Web Services\2.2\Microsoft.Exchange.WebServices.dll'
+	}
   }
   else {
     # Use EWS managed API install path
